@@ -2,9 +2,10 @@
 
 import sys
 
-LDI = 0b10000010
-PRN = 0b01000111
-HLT = 0b00000001
+LDI = int(0b10000010)
+PRN = int(0b01000111)
+HLT = int(0b00000001)
+MUL = int(0b10100010)
 
 
 class CPU:
@@ -19,28 +20,30 @@ class CPU:
     def load(self):
         """Load a program into memory."""
         # For now, we've just hardcoded a program:
-        address = 0
+        if len(sys.argv) != 2:
+            print('Too many arguments provided.')
+            sys.exit()
+        filename = sys.argv[1]
 
-        program = [
-            # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
-            0b00000001,  # HLT
-        ]
-
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        with open(filename, 'r') as file:
+            address = 0
+            for line in file:
+                line_text = line.strip().split('#')
+                command = line_text[0]
+                if command == '':
+                    continue
+                self.ram[address] = int(command, 2)
+                address += 1
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        # elif op == "SUB": etc
+        elif op == MUL:
+            value = self.reg[reg_a] * self.reg[reg_b]
+            self.reg[reg_a] = value
+            print(value)
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -85,4 +88,7 @@ class CPU:
                 self.pc += 3
             elif command == PRN:
                 print(self.reg[operand_a])
+                self.pc += 2
+            elif command == MUL:
+                self.alu(MUL, operand_a, operand_b)
                 self.pc += 2
