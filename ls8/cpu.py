@@ -81,8 +81,8 @@ class CPU:
             if command == HLT:
                 sys.exit()
             elif command == LDI:
-                self.ram[operand_a] = operand_b
+                self.reg[operand_a] = operand_b
                 self.pc += 3
             elif command == PRN:
-                print(self.ram[operand_a])
+                print(self.reg[operand_a])
                 self.pc += 2
