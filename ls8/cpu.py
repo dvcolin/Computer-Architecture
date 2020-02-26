@@ -2,10 +2,10 @@
 
 import sys
 
-LDI = int(0b10000010)
-PRN = int(0b01000111)
-HLT = int(0b00000001)
-MUL = int(0b10100010)
+LDI = 0b10000010
+PRN = 0b01000111
+HLT = 0b00000001
+MUL = 0b10100010
 
 
 class CPU:
@@ -16,15 +16,36 @@ class CPU:
         self.reg = [0] * 8
         self.ram = [0] * 256
         self.pc = 0
+        self.branch_table = {
+            HLT: self.HLT,
+            PRN: self.PRN,
+            LDI: self.LDI,
+            MUL: self.MUL
+        }
+
+    def HLT(self, op_a, op_b):
+        sys.exit()
+
+    def LDI(self, op_a, op_b):
+        self.reg[op_a] = op_b
+        self.pc += 3
+
+    def PRN(self, op_a, _):
+        print(self.reg[op_a])
+        self.pc += 2
+
+    def MUL(self, op_a, op_b):
+        self.alu(MUL, op_a, op_b)
+        self.pc += 3
 
     def load(self):
         """Load a program into memory."""
         # For now, we've just hardcoded a program:
         if len(sys.argv) != 2:
-            print('Too many arguments provided.')
+            print('Please provide a file name as a second argument.')
             sys.exit()
-        filename = sys.argv[1]
 
+        filename = sys.argv[1]
         with open(filename, 'r') as file:
             address = 0
             for line in file:
@@ -43,7 +64,6 @@ class CPU:
         elif op == MUL:
             value = self.reg[reg_a] * self.reg[reg_b]
             self.reg[reg_a] = value
-            print(value)
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -81,14 +101,4 @@ class CPU:
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
-            if command == HLT:
-                sys.exit()
-            elif command == LDI:
-                self.reg[operand_a] = operand_b
-                self.pc += 3
-            elif command == PRN:
-                print(self.reg[operand_a])
-                self.pc += 2
-            elif command == MUL:
-                self.alu(MUL, operand_a, operand_b)
-                self.pc += 2
+            self.branch_table[command](operand_a, operand_b)
