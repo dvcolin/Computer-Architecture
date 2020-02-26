@@ -6,6 +6,8 @@ LDI = 0b10000010
 PRN = 0b01000111
 HLT = 0b00000001
 MUL = 0b10100010
+PUSH = 0b01000101
+POP = 0b01000110
 
 
 class CPU:
@@ -20,8 +22,11 @@ class CPU:
             HLT: self.HLT,
             PRN: self.PRN,
             LDI: self.LDI,
-            MUL: self.MUL
+            MUL: self.MUL,
+            PUSH: self.PUSH,
+            POP: self.POP
         }
+        self.sp = 0xF4
 
     def HLT(self, op_a, op_b):
         sys.exit()
@@ -37,6 +42,16 @@ class CPU:
     def MUL(self, op_a, op_b):
         self.alu(MUL, op_a, op_b)
         self.pc += 3
+
+    def PUSH(self, op_a, _):
+        self.sp -= 1
+        self.ram[self.sp] = self.reg[op_a]
+        self.pc += 2
+
+    def POP(self, op_a, _):
+        self.reg[op_a] = self.ram[self.sp]
+        self.sp += 1
+        self.pc += 2
 
     def load(self):
         """Load a program into memory."""
@@ -95,10 +110,10 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        # IR = self.pc
         while True:
             command = self.ram[self.pc]
+            IR = self.branch_table[command]
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
-            self.branch_table[command](operand_a, operand_b)
+            IR(operand_a, operand_b)
