@@ -33,25 +33,20 @@ class CPU:
 
     def LDI(self, op_a, op_b):
         self.reg[op_a] = op_b
-        self.pc += 3
 
     def PRN(self, op_a, _):
         print(self.reg[op_a])
-        self.pc += 2
 
     def MUL(self, op_a, op_b):
         self.alu(MUL, op_a, op_b)
-        self.pc += 3
 
     def PUSH(self, op_a, _):
         self.sp -= 1
         self.ram[self.sp] = self.reg[op_a]
-        self.pc += 2
 
     def POP(self, op_a, _):
         self.reg[op_a] = self.ram[self.sp]
         self.sp += 1
-        self.pc += 2
 
     def load(self):
         """Load a program into memory."""
@@ -112,8 +107,10 @@ class CPU:
         """Run the CPU."""
         while True:
             command = self.ram[self.pc]
+            num_operands = command >> 6
             IR = self.branch_table[command]
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
             IR(operand_a, operand_b)
+            self.pc += num_operands + 1
