@@ -8,6 +8,9 @@ HLT = 0b00000001
 MUL = 0b10100010
 PUSH = 0b01000101
 POP = 0b01000110
+CALL = 0b01010000
+RET = 0b00010001
+ADD = 0b10100000
 
 
 class CPU:
@@ -24,7 +27,10 @@ class CPU:
             LDI: self.LDI,
             MUL: self.MUL,
             PUSH: self.PUSH,
-            POP: self.POP
+            POP: self.POP,
+            CALL: self.CALL,
+            RET: self.RET,
+            ADD: self.ADD
         }
         self.sp = 0xF4
 
@@ -47,6 +53,18 @@ class CPU:
     def POP(self, op_a, _):
         self.reg[op_a] = self.ram[self.sp]
         self.sp += 1
+        return self.reg[op_a]
+
+    def CALL(self, op_a, _):
+        self.sp -= 1
+        self.ram[self.sp] = self.pc + 1
+        self.pc = self.reg[op_a] - 2
+
+    def RET(self, op_a, _):
+        self.pc = self.POP(op_a, _)
+
+    def ADD(self, op_a, op_b):
+        self.alu(ADD, op_a, op_b)
 
     def load(self):
         """Load a program into memory."""
@@ -69,7 +87,7 @@ class CPU:
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
-        if op == "ADD":
+        if op == ADD:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == MUL:
             value = self.reg[reg_a] * self.reg[reg_b]
@@ -105,6 +123,7 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
+
         while True:
             command = self.ram[self.pc]
             num_operands = command >> 6
