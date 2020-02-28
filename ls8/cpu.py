@@ -11,6 +11,10 @@ POP = 0b01000110
 CALL = 0b01010000
 RET = 0b00010001
 ADD = 0b10100000
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
 
 
 class CPU:
@@ -30,9 +34,14 @@ class CPU:
             POP: self.POP,
             CALL: self.CALL,
             RET: self.RET,
-            ADD: self.ADD
+            ADD: self.ADD,
+            CMP: self.CMP,
+            JMP: self.JMP,
+            JEQ: self.JEQ,
+            JNE: self.JNE
         }
         self.sp = 0xF4
+        self.fl = 0b00000000
 
     def HLT(self, op_a, op_b):
         sys.exit()
@@ -66,6 +75,20 @@ class CPU:
     def ADD(self, op_a, op_b):
         self.alu(ADD, op_a, op_b)
 
+    def CMP(self, op_a, op_b):
+        self.alu(CMP, op_a, op_b)
+
+    def JMP(self, op_a, _):
+        self.pc = self.reg[op_a] - 2
+
+    def JEQ(self, op_a, _):
+        if self.fl == 0b00000001:
+            self.JMP(op_a, _)
+
+    def JNE(self, op_a, _):
+        if self.fl != 0b00000001:
+            self.JMP(op_a, _)
+
     def load(self):
         """Load a program into memory."""
         # For now, we've just hardcoded a program:
@@ -92,6 +115,17 @@ class CPU:
         elif op == MUL:
             value = self.reg[reg_a] * self.reg[reg_b]
             self.reg[reg_a] = value
+        elif op == CMP:
+            regA = self.reg[reg_a]
+            regB = self.reg[reg_b]
+
+            if regA == regB:
+                self.fl = 0b00000001
+            elif regA > regB:
+                self.fl = 0b00000010
+            elif regA < regB:
+                self.fl = 0b00000100
+
         else:
             raise Exception("Unsupported ALU operation")
 
